@@ -166,6 +166,19 @@ p {
   color: var(--cream);
 }
 
+.site-nav a.nav-login {
+  color: var(--indigo);
+  background: var(--gold);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+}
+
+.site-nav a.nav-login:hover {
+  color: var(--indigo);
+  background: var(--gold-deep);
+}
+
 .menu-btn {
   display: none;
   background: transparent;
@@ -1006,6 +1019,12 @@ h1 {
   .site-nav a {
     padding: 12px 0;
     border-bottom: 1px solid var(--line-light);
+  }
+
+  .site-nav a.nav-login {
+    margin-top: 12px;
+    text-align: center;
+    border-bottom: 0;
   }
 
   .header-bar {
