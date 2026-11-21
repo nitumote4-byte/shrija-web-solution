@@ -522,12 +522,7 @@ document.querySelectorAll(".rip").forEach((rip) => {
       if (id !== job) return;
       const morph = Math.min(1, (now - started) / 560);
       if (remote && morph >= 1) {
-        paint(1, 0, (now - started) / 280, true);
-        if (windOn && now - started > 1800) {
-          stopWind();
-          windOn = false;
-        }
-        requestAnimationFrame(frame);
+        reset(false);
         return;
       }
       paint(morph, real, 0, false);
@@ -546,6 +541,11 @@ document.querySelectorAll(".rip").forEach((rip) => {
     } catch (err) {}
   });
 
+  cancel.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    reset();
+  });
   cancel.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
