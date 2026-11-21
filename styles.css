@@ -324,6 +324,7 @@ h1 {
 
 .services,
 .reviews,
+.product,
 .contact {
   padding: 88px 0;
 }
@@ -579,6 +580,70 @@ h1 {
   color: var(--muted);
 }
 
+.product {
+  background: var(--cream-2);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.product h2 {
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  max-width: 14ch;
+}
+
+.product-version {
+  margin-top: 12px;
+  color: var(--gold-ink);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.product-lead {
+  margin-top: 14px;
+  color: var(--muted);
+  max-width: 42ch;
+}
+
+.product .btn {
+  margin-top: 22px;
+}
+
+.product-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.product-steps li {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+  align-items: start;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.product-steps span {
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--gold-ink);
+}
+
+.product-steps p {
+  color: var(--muted);
+}
+
 .contact-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -720,6 +785,7 @@ h1 {
 #services,
 #process,
 #reviews,
+#download,
 #contact {
   scroll-margin-top: calc(var(--header) + 12px);
 }
@@ -728,6 +794,7 @@ h1 {
   .hero-grid,
   .section-head,
   .review-board,
+  .product-grid,
   .contact-grid,
   .steps,
   .footer-bar {
@@ -801,6 +868,7 @@ h1 {
 
   .services,
   .reviews,
+  .product,
   .process,
   .contact {
     padding: 64px 0;
