@@ -45,6 +45,7 @@
       <nav id="site-nav" class="site-nav" aria-label="Primary">
         <a href="#services">Services</a>
         <a href="#process">Process</a>
+        <a href="#reviews">Reviews</a>
         <a href="#contact">Contact</a>
         <a class="nav-call" href="tel:+918080132061">8080132061</a>
       </nav>
@@ -138,6 +139,52 @@
             <p>The site, app, or store goes up with your phone number on it. You know how to reach us after it is live.</p>
           </li>
         </ol>
+      </div>
+    </section>
+
+    <section class="reviews" id="reviews">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">Reviews</p>
+          <h2>Rate the work in stars.</h2>
+          <p>Leave a rating and a short note. It opens WhatsApp, and published reviews stay on this page for everyone.</p>
+        </div>
+        <div class="review-board">
+          <div class="rating-panel">
+            <p class="score is-empty" id="rating-score">New</p>
+            <p class="score-stars" id="rating-stars" aria-hidden="true">☆☆☆☆☆</p>
+            <p class="score-count" id="rating-count">No published reviews yet</p>
+            <form class="note review-form" id="review-form" novalidate>
+              <fieldset class="star-field">
+                <legend>Your rating</legend>
+                <div class="star-row" role="radiogroup" aria-label="Your rating">
+                  <button class="star" type="button" role="radio" data-value="1" aria-checked="false" aria-label="1 star">★</button>
+                  <button class="star" type="button" role="radio" data-value="2" aria-checked="false" aria-label="2 stars">★</button>
+                  <button class="star" type="button" role="radio" data-value="3" aria-checked="false" aria-label="3 stars">★</button>
+                  <button class="star" type="button" role="radio" data-value="4" aria-checked="false" aria-label="4 stars">★</button>
+                  <button class="star" type="button" role="radio" data-value="5" aria-checked="false" aria-label="5 stars">★</button>
+                </div>
+              </fieldset>
+              <div class="field">
+                <label for="review-name">Your name</label>
+                <input id="review-name" name="reviewName" type="text" autocomplete="name" maxlength="60" required>
+              </div>
+              <div class="field">
+                <label for="review-text">Your review</label>
+                <textarea id="review-text" name="reviewText" rows="4" maxlength="400" required placeholder="What did we build, and how did it go?"></textarea>
+              </div>
+              <p class="form-error" id="review-error" role="alert" hidden></p>
+              <button class="btn btn-gold btn-block" type="submit">Send rating on WhatsApp</button>
+              <p class="form-status" id="review-status" role="status"></p>
+            </form>
+          </div>
+          <div>
+            <h3 class="review-list-title">Published reviews</h3>
+            <div class="review-list" id="review-list"></div>
+            <h3 class="review-list-title" id="local-review-title" hidden>On this browser</h3>
+            <div class="review-list" id="local-review-list"></div>
+          </div>
+        </div>
       </div>
     </section>
 
