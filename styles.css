@@ -661,106 +661,57 @@ h1 {
 }
 
 .rip {
-  position: relative;
-  width: 168px;
-  flex: 0 0 168px;
-  min-height: 118px;
+  width: 260px;
+  flex: 0 0 260px;
   display: grid;
   justify-items: center;
   align-content: center;
   color: var(--gold-ink);
 }
 
-.rip-ring {
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  border: 4px solid var(--gold);
-  background: #fffdf8;
-  color: var(--indigo);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  padding: 0;
-  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.45s, height 0.45s, border-radius 0.45s, opacity 0.2s;
-}
-
-.rip-ring[hidden] {
-  display: none;
-}
-
-.rip-ring svg {
-  width: 28px;
-  height: 28px;
-}
-
-.rip-ring:hover {
-  transform: translateY(2px);
-  background: #fff8ea;
-}
-
-.rip.is-run .rip-ring {
-  position: absolute;
-  top: 46px;
-  width: 100%;
-  height: 8px;
-  border-width: 0;
-  border-radius: 999px;
-  background: var(--gold);
-  color: transparent;
-  pointer-events: none;
-  opacity: 0;
-}
-
-.rip-stage[hidden],
-.rip-done[hidden] {
-  display: none;
-}
-
-.rip-stage,
-.rip-done {
-  width: min(100%, 420px);
+.rip-visual {
+  width: 260px;
   display: grid;
   justify-items: center;
-  gap: 6px;
+  align-items: center;
 }
 
-.rip-chute {
-  color: var(--indigo);
-  height: 52px;
-  margin-bottom: 8px;
-  transform: translateY(14px);
+.rip-svg {
+  grid-area: 1 / 1;
+  width: 260px;
+  height: 140px;
 }
 
-.rip-chute svg {
-  width: 72px;
-  height: 52px;
+.rip:not(.is-run):not(.is-done):hover .rip-svg {
+  transform: translateY(2px);
+}
+
+.rip-ring {
+  grid-area: 1 / 1;
+  width: 84px;
+  height: 84px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.rip.is-run .rip-ring,
+.rip.is-done .rip-ring,
+.rip-pct,
+.rip-cancel,
+.rip-done {
+  display: none;
+}
+
+.rip.is-run .rip-pct,
+.rip.is-run .rip-cancel {
   display: block;
-}
-
-.rip-track {
-  width: 100%;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(40, 37, 92, 0.16);
-  overflow: hidden;
-}
-
-.rip-fill {
-  display: block;
-  height: 100%;
-  width: 100%;
-  transform: scaleX(0);
-  transform-origin: left center;
-  background: var(--gold);
-  border-radius: inherit;
-}
-
-.rip.is-wave .rip-track {
-  animation: rip-wave 0.55s ease;
 }
 
 .rip-pct {
+  margin: -8px 0 0;
   font-family: var(--display);
   font-weight: 800;
   font-size: 1.35rem;
@@ -781,16 +732,26 @@ h1 {
 }
 
 .rip-file {
-  margin-top: 8px;
+  margin: 4px 0 0;
   color: var(--muted);
   font-size: 0.82rem;
   text-align: center;
 }
 
-.rip-done {
+.rip.is-done .rip-svg,
+.rip.is-done .rip-pct,
+.rip.is-done .rip-cancel {
+  display: none;
+}
+
+.rip.is-done .rip-done {
+  grid-area: 1 / 1;
+  display: grid;
   grid-template-columns: auto auto auto;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
   color: var(--indigo);
 }
 
@@ -798,45 +759,38 @@ h1 {
   margin: 0;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   color: var(--indigo);
   max-width: none;
 }
 
+.rip-speaker {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--indigo);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(40, 37, 92, 0.1);
+}
+
 .rip-speaker svg,
 .rip-check svg {
-  width: 36px;
-  height: 36px;
+  width: 22px;
+  height: 22px;
 }
 
 .rip-check {
-  width: 64px;
-  height: 64px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   border: 3px solid var(--gold);
   color: var(--gold-ink);
   display: grid;
   place-items: center;
-}
-
-.rip.is-run,
-.rip.is-done {
-  width: min(100%, 440px);
-  flex-basis: min(100%, 440px);
-  min-height: 0;
-  margin-inline: auto;
-}
-
-.software-list li:has(.rip.is-run),
-.software-list li:has(.rip.is-done) {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-@keyframes rip-wave {
-  0% { transform: scaleY(1); }
-  40% { transform: scaleY(2.4) translateY(-2px); }
-  100% { transform: scaleY(1); }
 }
 
 .contact-grid {
@@ -1072,11 +1026,14 @@ h1 {
     align-items: stretch;
   }
 
-  .rip,
-  .rip.is-run,
-  .rip.is-done {
+  .rip {
     width: 100%;
     flex-basis: auto;
+  }
+
+  .rip-visual,
+  .rip-svg {
+    width: min(100%, 280px);
   }
 }
 
@@ -1085,8 +1042,7 @@ h1 {
     scroll-behavior: auto;
   }
 
-  .node,
-  .rip.is-wave .rip-track {
+  .node {
     animation: none;
   }
 }

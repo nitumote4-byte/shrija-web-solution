@@ -207,7 +207,7 @@ reviewForm.addEventListener("submit", (event) => {
 
 renderReviews();
 
-const ripAudio = { ctx: null };
+const ripAudio = { ctx: null, wind: null };
 
 function ripContext() {
   if (!ripAudio.ctx) ripAudio.ctx = new AudioContext();
@@ -222,36 +222,67 @@ function ripTone(freq, delay, duration, type, volume) {
   osc.type = type;
   osc.frequency.setValueAtTime(freq, start);
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.02);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.03);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
   osc.connect(gain).connect(ctx.destination);
   osc.start(start);
-  osc.stop(start + duration + 0.03);
+  osc.stop(start + duration + 0.04);
 }
 
 function playRipStart() {
   const ctx = ripContext();
-  const length = Math.floor(ctx.sampleRate * 0.32);
-  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(380, ctx.currentTime);
-  filter.frequency.exponentialRampToValueAtTime(2200, ctx.currentTime + 0.26);
+  const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.16, ctx.currentTime);
-  source.connect(filter).connect(gain).connect(ctx.destination);
-  source.start();
-  ripTone(196, 0, 0.2, "sine", 0.05);
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(180, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(740, ctx.currentTime + 0.42);
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.32, ctx.currentTime + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.46);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.48);
+  ripTone(240, 0.02, 0.28, "sine", 0.18);
 }
 
 function playRipDone() {
-  ripTone(523.25, 0, 0.16, "sine", 0.11);
-  ripTone(659.25, 0.09, 0.2, "sine", 0.09);
-  ripTone(783.99, 0.18, 0.36, "triangle", 0.07);
+  ripTone(523.25, 0, 0.2, "sine", 0.34);
+  ripTone(659.25, 0.12, 0.24, "sine", 0.3);
+  ripTone(783.99, 0.24, 0.46, "triangle", 0.26);
+}
+
+function startWind() {
+  stopWind();
+  const ctx = ripContext();
+  const length = ctx.sampleRate * 2;
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i += 1) data[i] = Math.random() * 2 - 1;
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.frequency.value = 520;
+  filter.Q.value = 0.6;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 0.12);
+  source.connect(filter).connect(gain).connect(ctx.destination);
+  source.start();
+  ripAudio.wind = { source, gain, ctx };
+}
+
+function stopWind() {
+  const wind = ripAudio.wind;
+  if (!wind) return;
+  ripAudio.wind = null;
+  const now = wind.ctx.currentTime;
+  const level = Math.max(wind.gain.gain.value, 0.001);
+  wind.gain.gain.cancelScheduledValues(now);
+  wind.gain.gain.setValueAtTime(level, now);
+  wind.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+  wind.source.stop(now + 0.2);
 }
 
 function saveBlob(blob, name) {
@@ -275,26 +306,117 @@ function openDownload(url) {
   link.remove();
 }
 
+const RIP_NS = "http://www.w3.org/2000/svg";
+const RIP_CX = 140;
+const RIP_R = 30;
+const RING_Y = 78;
+const ROPE_Y = 118;
+
+function ripEl(name, attrs) {
+  const node = document.createElementNS(RIP_NS, name);
+  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+  return node;
+}
+
+function ellipsePath(morph) {
+  const yBase = RING_Y + (ROPE_Y - RING_Y) * morph;
+  const squash = 1 - morph;
+  const xRadius = RIP_R + morph * (Math.PI * RIP_R - RIP_R);
+  let d = "";
+  const steps = 72;
+  for (let i = 0; i <= steps; i += 1) {
+    const ang = -Math.PI / 2 + (i / steps) * Math.PI * 2;
+    const x = RIP_CX + Math.cos(ang) * xRadius;
+    const y = yBase + Math.sin(ang) * RIP_R * squash;
+    d += `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  return `${d}Z`;
+}
+
+function linePath(amp, phase) {
+  const left = RIP_CX - Math.PI * RIP_R;
+  const len = Math.PI * 2 * RIP_R;
+  let d = "";
+  const steps = 42;
+  for (let i = 0; i <= steps; i += 1) {
+    const u = i / steps;
+    const x = left + u * len;
+    const y = ROPE_Y + Math.sin(u * Math.PI * 2 + phase) * amp;
+    d += `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  return d;
+}
+
 document.querySelectorAll(".rip").forEach((rip) => {
+  const svg = rip.querySelector(".rip-svg");
   const ring = rip.querySelector(".rip-ring");
-  const stage = rip.querySelector(".rip-stage");
-  const done = rip.querySelector(".rip-done");
-  const fill = rip.querySelector(".rip-fill");
   const pct = rip.querySelector(".rip-pct");
-  const chute = rip.querySelector(".rip-chute");
   const cancel = rip.querySelector(".rip-cancel");
+  const speaker = rip.querySelector(".rip-speaker");
   const url = rip.dataset.url;
   const file = rip.dataset.file;
-  const saveLocally = rip.dataset.save === "1";
+  const knownBytes = Number(rip.dataset.bytes) || 0;
+  const remote = /^https?:/i.test(url);
+  const track = ripEl("path", { fill: "none", stroke: "rgba(40,37,92,0.16)", "stroke-width": "5.5", "stroke-linecap": "round" });
+  const ink = ripEl("path", { fill: "none", stroke: "#f3a92c", "stroke-width": "5.5", "stroke-linecap": "round", "stroke-linejoin": "round" });
+  const chute = ripEl("g", { fill: "none", stroke: "#28255c", "stroke-width": "2.4", "stroke-linecap": "round", "stroke-linejoin": "round" });
+  const canopy = ripEl("path", { d: "M-36,12 C-24,-16 24,-16 36,12", "stroke-width": "2.6" });
+  const skirt = ripEl("path", { d: "M-36,12 Q0,20 36,12" });
+  const ropeL = ripEl("path", {});
+  const ropeR = ripEl("path", {});
+  const ropeIn = ripEl("path", {});
+  const knot = ripEl("path", {});
+  chute.append(canopy, skirt, ropeL, ropeR, ropeIn, knot);
+  const arrow = ripEl("path", {
+    d: "M0 -10 V7 M-6 1 L0 8 L6 1",
+    fill: "none",
+    stroke: "#28255c",
+    "stroke-width": "2.6",
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    transform: `translate(${RIP_CX} ${RING_Y})`
+  });
+  svg.append(track, ink, chute, arrow);
+
   let job = 0;
   let xhr = null;
-  let finishing = false;
+  let windOn = false;
 
-  function paint(amount) {
-    const value = Math.max(0, Math.min(1, amount));
-    fill.style.transform = `scaleX(${value})`;
-    pct.textContent = `${Math.round(value * 100)}%`;
-    chute.style.transform = `translateY(${(1 - value) * 16}px)`;
+  function paint(morph, progress, phase, indeterminate) {
+    const amount = Math.max(0, Math.min(1, morph));
+    const value = Math.max(0, Math.min(1, progress));
+    const amp = phase ? Math.sin(Math.min(phase, Math.PI)) * 8 : 0;
+    if (amount < 0.98) {
+      track.setAttribute("opacity", "0");
+      ink.removeAttribute("pathLength");
+      ink.style.strokeDasharray = "none";
+      ink.setAttribute("d", ellipsePath(amount));
+    } else {
+      const d = linePath(amp, phase || 0);
+      track.setAttribute("opacity", "1");
+      track.setAttribute("d", d);
+      ink.setAttribute("d", d);
+      ink.setAttribute("pathLength", "100");
+      if (indeterminate) {
+        ink.style.strokeDasharray = "24 76";
+        ink.style.strokeDashoffset = String(-(phase || 0) * 18);
+      } else {
+        ink.style.strokeDasharray = `${Math.max(1, value * 100)} 100`;
+        ink.style.strokeDashoffset = "0";
+      }
+    }
+    const rise = indeterminate ? 0.82 : 0.28 + (1 - (1 - value) ** 2) * 0.72;
+    const canopyY = ROPE_Y - 36 - rise * 52;
+    const drop = Math.max(28, ROPE_Y - 8 - canopyY);
+    chute.setAttribute("opacity", String(Math.min(1, amount * 1.8)));
+    chute.setAttribute("transform", `translate(${RIP_CX} ${canopyY.toFixed(1)})`);
+    ropeL.setAttribute("d", `M-28,12 L-5,${drop.toFixed(1)}`);
+    ropeR.setAttribute("d", `M28,12 L5,${drop.toFixed(1)}`);
+    ropeIn.setAttribute("d", `M-12,12 L-2,${drop.toFixed(1)} M12,12 L2,${drop.toFixed(1)}`);
+    knot.setAttribute("d", `M-7,${drop.toFixed(1)} H7`);
+    arrow.setAttribute("opacity", amount < 0.35 ? String(1 - amount / 0.35) : "0");
+    if (indeterminate) pct.textContent = "Downloading";
+    else pct.textContent = `${Math.round(value * 100)}%`;
   }
 
   function reset() {
@@ -303,101 +425,126 @@ document.querySelectorAll(".rip").forEach((rip) => {
       xhr.abort();
       xhr = null;
     }
-    finishing = false;
-    rip.classList.remove("is-run", "is-done", "is-wave");
-    ring.hidden = false;
-    stage.hidden = true;
-    done.hidden = true;
-    paint(0);
+    if (windOn) {
+      stopWind();
+      windOn = false;
+    }
+    rip.classList.remove("is-run", "is-done");
+    paint(0, 0, 0, false);
   }
 
-  function finish() {
-    if (finishing) return;
-    finishing = true;
-    const id = job;
-    rip.classList.add("is-wave");
-    window.setTimeout(() => {
-      if (id !== job) return;
-      rip.classList.remove("is-run", "is-wave");
-      rip.classList.add("is-done");
-      ring.hidden = true;
-      stage.hidden = true;
-      done.hidden = false;
-      playRipDone();
-    }, 420);
+  function showDone() {
+    rip.classList.remove("is-run");
+    rip.classList.add("is-done");
+    if (windOn) {
+      stopWind();
+      windOn = false;
+    }
+    playRipDone();
   }
 
-  function runTimed() {
-    const id = job;
+  function waveThenSave(id, blob) {
     const started = performance.now();
-    const duration = 2400;
-    let handed = false;
-    const frame = (now) => {
+    const step = (now) => {
       if (id !== job) return;
-      const t = Math.min(1, (now - started) / duration);
-      const eased = 1 - (1 - t) ** 3;
-      paint(eased);
-      if (!handed && t > 0.18) {
-        handed = true;
-        openDownload(url);
+      const t = (now - started) / 680;
+      if (t < 1) {
+        paint(1, 1, t * Math.PI, false);
+        requestAnimationFrame(step);
+        return;
       }
-      if (t < 1) requestAnimationFrame(frame);
-      else finish();
+      saveBlob(blob, file);
+      showDone();
     };
-    requestAnimationFrame(frame);
-    cancel.onclick = reset;
+    requestAnimationFrame(step);
   }
 
-  function runSaved() {
+  function runMeasured() {
     const id = job;
     const started = performance.now();
     let real = 0;
+    let blob = null;
+    let unmeasured = remote;
+    let handed = false;
+    if (remote) openDownload(url);
+    if (!remote) {
     xhr = new XMLHttpRequest();
     xhr.open("GET", url);
     xhr.responseType = "blob";
     xhr.onprogress = (event) => {
-      if (event.lengthComputable) real = event.loaded / event.total;
+      if (event.lengthComputable && event.total > 0) real = event.loaded / event.total;
+      else if (knownBytes > 0) real = Math.min(0.99, event.loaded / knownBytes);
     };
-    xhr.onerror = reset;
+    xhr.onerror = () => {
+      if (id !== job || handed) return;
+      if (!remote) {
+        reset();
+        return;
+      }
+      handed = true;
+      unmeasured = true;
+      xhr = null;
+      openDownload(url);
+    };
     xhr.onabort = () => {};
     xhr.onload = () => {
       if (id !== job) return;
       if (xhr.status < 200 || xhr.status >= 300) {
-        reset();
+        if (remote && !handed) {
+          handed = true;
+          unmeasured = true;
+          openDownload(url);
+        } else reset();
         return;
       }
-      saveBlob(xhr.response, file);
+      blob = xhr.response;
       real = 1;
     };
     xhr.send();
+    }
     const frame = (now) => {
       if (id !== job) return;
-      const shown = Math.min(real, (now - started) / 1600);
-      paint(shown);
-      if (real >= 1 && now - started > 1600) finish();
+      const morph = Math.min(1, (now - started) / 560);
+      if (unmeasured && morph >= 1) {
+        paint(1, 0, (now - started) / 280, true);
+        if (windOn && now - started > 1800) {
+          stopWind();
+          windOn = false;
+        }
+        requestAnimationFrame(frame);
+        return;
+      }
+      paint(morph, real, 0, false);
+      if (blob && morph >= 1) waveThenSave(id, blob);
       else requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
     cancel.onclick = reset;
   }
 
+  paint(0, 0, 0, false);
+
+  speaker.addEventListener("click", () => {
+    const ctx = ripContext();
+    ctx.resume();
+    playRipDone();
+  });
+
   ring.addEventListener("click", () => {
     if (rip.classList.contains("is-run")) return;
+    const ctx = ripContext();
+    ctx.resume();
+    playRipStart();
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       openDownload(url);
-      playRipDone();
       return;
     }
-    ripContext().resume();
-    playRipStart();
+    startWind();
+    windOn = true;
     job += 1;
     rip.classList.add("is-run");
     rip.classList.remove("is-done");
-    ring.hidden = false;
-    done.hidden = true;
-    stage.hidden = false;
-    paint(0);
-    if (saveLocally) runSaved();
-    else runTimed();
+    paint(0, 0, 0, false);
+    runMeasured();
   });
 });
