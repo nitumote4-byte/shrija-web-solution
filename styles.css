@@ -172,6 +172,8 @@ p {
   border-radius: 999px;
   padding: 8px 14px;
   font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .site-nav a.nav-login:hover {
