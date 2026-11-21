@@ -707,9 +707,26 @@ h1 {
   display: none;
 }
 
+.rip.is-run .rip-ring {
+  pointer-events: none;
+}
+
 .rip.is-run .rip-pct,
 .rip.is-run .rip-cancel {
   display: block;
+  grid-area: 1 / 1;
+  z-index: 4;
+  pointer-events: auto;
+}
+
+.rip.is-run .rip-pct {
+  align-self: center;
+  margin: 22px 0 0;
+}
+
+.rip.is-run .rip-cancel {
+  align-self: end;
+  margin: 0 0 8px;
 }
 
 .rip-pct {

@@ -318,14 +318,10 @@ function saveBlob(blob, name) {
   setTimeout(() => URL.revokeObjectURL(href), 4000);
 }
 
-function openDownload(url) {
-  const link = document.createElement("a");
-  link.href = url;
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  document.body.append(link);
-  link.click();
-  link.remove();
+let activeReset = null;
+
+function stopNavigation() {
+  try { window.stop(); } catch (err) {}
 }
 
 const RIP_NS = "http://www.w3.org/2000/svg";
@@ -403,6 +399,7 @@ document.querySelectorAll(".rip").forEach((rip) => {
   let job = 0;
   let xhr = null;
   let windOn = false;
+  let saved = false;
 
   function paint(morph, progress, phase, indeterminate) {
     const amount = Math.max(0, Math.min(1, morph));
@@ -441,12 +438,18 @@ document.querySelectorAll(".rip").forEach((rip) => {
     else pct.textContent = `${Math.round(value * 100)}%`;
   }
 
-  function reset() {
+  function reset(stopLoad) {
+    const running = rip.classList.contains("is-run") || xhr;
+    if (stopLoad === false && !running) return;
+    if (!running && !rip.classList.contains("is-done")) return;
     job += 1;
+    saved = false;
+    if (activeReset === reset) activeReset = null;
     if (xhr) {
       xhr.abort();
       xhr = null;
     }
+    if (remote && stopLoad !== false) stopNavigation();
     if (windOn) {
       stopWind();
       windOn = false;
@@ -456,6 +459,7 @@ document.querySelectorAll(".rip").forEach((rip) => {
   }
 
   function showDone() {
+    if (activeReset === reset) activeReset = null;
     rip.classList.remove("is-run");
     rip.classList.add("is-done");
     if (windOn) {
@@ -476,6 +480,10 @@ document.querySelectorAll(".rip").forEach((rip) => {
         return;
       }
       showDone();
+      if (blob && !saved) {
+        saved = true;
+        saveBlob(blob, file);
+      }
     };
     requestAnimationFrame(step);
   }
@@ -485,47 +493,35 @@ document.querySelectorAll(".rip").forEach((rip) => {
     const started = performance.now();
     let real = 0;
     let blob = null;
-    let unmeasured = remote;
-    let handed = false;
     if (!remote) {
-    xhr = new XMLHttpRequest();
-    xhr.open("GET", url);
-    xhr.responseType = "blob";
-    xhr.onprogress = (event) => {
-      if (event.lengthComputable && event.total > 0) real = event.loaded / event.total;
-      else if (knownBytes > 0) real = Math.min(0.99, event.loaded / knownBytes);
-    };
-    xhr.onerror = () => {
-      if (id !== job || handed) return;
-      if (!remote) {
-        reset();
-        return;
-      }
-      handed = true;
-      unmeasured = true;
-      xhr = null;
-      openDownload(url);
-    };
-    xhr.onabort = () => {};
-    xhr.onload = () => {
-      if (id !== job) return;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        if (remote && !handed) {
-          handed = true;
-          unmeasured = true;
-          openDownload(url);
-        } else reset();
-        return;
-      }
-      blob = xhr.response;
-      real = 1;
-    };
-    xhr.send();
+      xhr = new XMLHttpRequest();
+      xhr.open("GET", url);
+      xhr.responseType = "blob";
+      xhr.onprogress = (event) => {
+        if (id !== job) return;
+        if (event.lengthComputable && event.total > 0) real = event.loaded / event.total;
+        else if (knownBytes > 0) real = Math.min(0.99, event.loaded / knownBytes);
+      };
+      xhr.onerror = () => {
+        if (id === job) reset();
+      };
+      xhr.onabort = () => {};
+      xhr.onload = () => {
+        if (id !== job) return;
+        if (xhr.status < 200 || xhr.status >= 300) {
+          reset();
+          return;
+        }
+        blob = xhr.response;
+        real = 1;
+        xhr = null;
+      };
+      xhr.send();
     }
     const frame = (now) => {
       if (id !== job) return;
       const morph = Math.min(1, (now - started) / 560);
-      if (unmeasured && morph >= 1) {
+      if (remote && morph >= 1) {
         paint(1, 0, (now - started) / 280, true);
         if (windOn && now - started > 1800) {
           stopWind();
@@ -539,7 +535,6 @@ document.querySelectorAll(".rip").forEach((rip) => {
       else requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
-    cancel.onclick = reset;
   }
 
   paint(0, 0, 0, false);
@@ -551,17 +546,27 @@ document.querySelectorAll(".rip").forEach((rip) => {
     } catch (err) {}
   });
 
+  cancel.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    reset();
+  });
+
   const fileLink = rip.querySelector(".rip-file");
   function beginDownload(event) {
     if (rip.classList.contains("is-run")) {
-      if (event.currentTarget === ring) event.preventDefault();
+      event.preventDefault();
       return;
     }
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (activeReset && activeReset !== reset) activeReset();
+    activeReset = reset;
+    if (!remote && !reduce) event.preventDefault();
     try {
       ripContext().resume();
       playRipStart();
     } catch (err) {}
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reduce) return;
     try {
       startWind();
       windOn = true;
@@ -569,9 +574,22 @@ document.querySelectorAll(".rip").forEach((rip) => {
     job += 1;
     rip.classList.add("is-run");
     rip.classList.remove("is-done");
+    saved = false;
     paint(0, 0, 0, false);
     runMeasured();
   }
   ring.addEventListener("click", beginDownload);
   fileLink.addEventListener("click", beginDownload);
+});
+
+function releaseDownload() {
+  if (activeReset) activeReset(false);
+}
+
+if (window.navigation) {
+  navigation.addEventListener("navigateerror", releaseDownload);
+}
+
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) releaseDownload();
 });
