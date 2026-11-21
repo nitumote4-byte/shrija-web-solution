@@ -166,19 +166,6 @@ p {
   color: var(--cream);
 }
 
-.nav-call {
-  color: var(--indigo) !important;
-  background: var(--gold);
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-weight: 600 !important;
-}
-
-.nav-call:hover {
-  background: var(--gold-deep);
-  color: var(--indigo) !important;
-}
-
 .menu-btn {
   display: none;
   background: transparent;
@@ -887,12 +874,6 @@ h1 {
   .site-nav a {
     padding: 12px 0;
     border-bottom: 1px solid var(--line-light);
-  }
-
-  .nav-call {
-    margin-top: 12px;
-    text-align: center;
-    border-bottom: 0;
   }
 
   .header-bar {
