@@ -453,7 +453,6 @@ document.querySelectorAll(".rip").forEach((rip) => {
         requestAnimationFrame(step);
         return;
       }
-      saveBlob(blob, file);
       showDone();
     };
     requestAnimationFrame(step);
@@ -466,7 +465,6 @@ document.querySelectorAll(".rip").forEach((rip) => {
     let blob = null;
     let unmeasured = remote;
     let handed = false;
-    if (remote) openDownload(url);
     if (!remote) {
     xhr = new XMLHttpRequest();
     xhr.open("GET", url);
@@ -525,26 +523,33 @@ document.querySelectorAll(".rip").forEach((rip) => {
   paint(0, 0, 0, false);
 
   speaker.addEventListener("click", () => {
-    const ctx = ripContext();
-    ctx.resume();
-    playRipDone();
+    try {
+      ripContext().resume();
+      playRipDone();
+    } catch (err) {}
   });
 
-  ring.addEventListener("click", () => {
-    if (rip.classList.contains("is-run")) return;
-    const ctx = ripContext();
-    ctx.resume();
-    playRipStart();
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      openDownload(url);
+  const fileLink = rip.querySelector(".rip-file");
+  function beginDownload(event) {
+    if (rip.classList.contains("is-run")) {
+      if (event.currentTarget === ring) event.preventDefault();
       return;
     }
-    startWind();
-    windOn = true;
+    try {
+      ripContext().resume();
+      playRipStart();
+    } catch (err) {}
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    try {
+      startWind();
+      windOn = true;
+    } catch (err) {}
     job += 1;
     rip.classList.add("is-run");
     rip.classList.remove("is-done");
     paint(0, 0, 0, false);
     runMeasured();
-  });
+  }
+  ring.addEventListener("click", beginDownload);
+  fileLink.addEventListener("click", beginDownload);
 });

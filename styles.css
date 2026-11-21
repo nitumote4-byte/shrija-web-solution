@@ -680,6 +680,7 @@ h1 {
   grid-area: 1 / 1;
   width: 260px;
   height: 140px;
+  pointer-events: none;
 }
 
 .rip:not(.is-run):not(.is-done):hover .rip-svg {
@@ -688,13 +689,14 @@ h1 {
 
 .rip-ring {
   grid-area: 1 / 1;
-  width: 84px;
-  height: 84px;
-  border: 0;
+  z-index: 2;
+  display: block;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
-  padding: 0;
+  text-decoration: none;
 }
 
 .rip.is-run .rip-ring,
@@ -736,6 +738,7 @@ h1 {
   color: var(--muted);
   font-size: 0.82rem;
   text-align: center;
+  text-decoration: none;
 }
 
 .rip.is-done .rip-svg,
