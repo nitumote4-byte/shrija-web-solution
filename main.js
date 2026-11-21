@@ -1,3 +1,25 @@
+const promo = document.querySelector("#promo");
+const PROMO_KEY = "shrija-promo";
+
+function finishPromo() {
+  if (!promo || !promo.isConnected || promo.classList.contains("is-out")) return;
+  promo.classList.add("is-out");
+  document.documentElement.classList.remove("promo-on");
+  try {
+    sessionStorage.setItem(PROMO_KEY, "1");
+  } catch (error) {}
+  window.setTimeout(() => promo.remove(), 420);
+}
+
+if (promo && !document.documentElement.classList.contains("promo-off")) {
+  document.documentElement.classList.add("promo-on");
+  promo.addEventListener("click", finishPromo);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") finishPromo();
+  });
+  window.setTimeout(finishPromo, 2500);
+}
+
 const menuBtn = document.querySelector(".menu-btn");
 const nav = document.querySelector("#site-nav");
 

@@ -15,6 +15,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    try {
+      if (sessionStorage.getItem("shrija-promo") === "1" || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("promo-off");
+      }
+    } catch (error) {}
+  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -29,6 +36,15 @@
 </head>
 <body>
   <a class="skip" href="#content">Skip to content</a>
+
+  <div class="promo" id="promo" role="dialog" aria-modal="true" aria-label="Shrija Web Solution">
+    <button class="promo-skip" type="button">Skip</button>
+    <div class="promo-mark">
+      <img src="assets/mark.png" width="460" height="600" alt="">
+    </div>
+    <p class="promo-name"><strong>Shrija</strong><small>Web Solution</small></p>
+    <span class="promo-line" aria-hidden="true"></span>
+  </div>
 
   <header class="site-header">
     <div class="wrap header-bar">
